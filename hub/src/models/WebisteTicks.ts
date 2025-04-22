@@ -4,7 +4,7 @@ import { Document, Schema } from "mongoose";
 
 interface IWebsiteTick extends Document {
   validatorID: mongoose.Types.ObjectId;
-  userID: mongoose.Types.ObjectId;
+
   status: "Good" | "Bad";
   latency: number;
   statusCode: number;
@@ -17,11 +17,7 @@ const WebsiteTickSchema = new Schema({
     ref: "Validator",
     required: true,
   },
-  userID: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
+  
   status: {
     type: String,
     enum: ["Good", "Bad"],

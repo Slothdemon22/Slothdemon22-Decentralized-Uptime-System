@@ -1,6 +1,8 @@
 import express, { json } from 'express';
 import { Server, WebSocketServer,WebSocket } from 'ws'; 
 import mongoose from 'mongoose';
+import { connectDB } from './utils/connectDB';
+import Website from './models/Website';
 
 
 const app = express();
@@ -16,7 +18,7 @@ const expressServer = app.listen(PORT, () => {
 
 
 const wss = new WebSocketServer({ server: expressServer });
-
+connectDB()
 
 wss.on('connection', (ws: WebSocket) => {
     console.log('New WebSocket connection');
@@ -24,23 +26,36 @@ wss.on('connection', (ws: WebSocket) => {
     ws.on('message', (message: Buffer) => {
       
       const messageString = message.toString();
-      console.log(`Received: ${messageString}`);
+      const parsedMessage = JSON.parse(messageString);
+     
    
       
-      ws.send(`Server received: ${messageString}`);
-      console.log(JSON.parse(messageString));
-      availableValidators.push({validatorID:JSON.parse(messageString).validatorID,socket:ws});
-      console.log(availableValidators.length);
+     
+     if(parsedMessage.type === 'register') {
+        const { validatorID } = parsedMessage;
+        availableValidators.push({ validatorID, socket: ws });
+        console.log('Validator registered:', validatorID);
+        ws.send(JSON.stringify({ type: 'registered', validatorID }));
+      }
+      if(parsedMessage.type === 'validate') {
+     
+        const { validatorID, website, statusCode, latency,status } = parsedMessage;
+        console.log('Received validation from validator:', validatorID, statusCode, latency,status);
+       
+        // const newTick = new WebsiteTick({ validatorID, status, latency });
+        // await newTick.save();
+      }
       
-    //   wss.clients.forEach((client) => {
-    //     if (client !== ws && client.readyState === WebSocket.OPEN) {
-    //       client.send(`User said: ${messageString}`);
-    //     }
-    //   });
+  ;
     });
   
     ws.on('close', () => {
       console.log('Client disconnected');
+      const index = availableValidators.findIndex((validator) => validator.socket === ws);
+      if (index !== -1) {
+        availableValidators.splice(index, 1);
+      }
+      console.log('Available validators:', availableValidators);
     });
   
     ws.on('error', (error: Error) => {
@@ -50,11 +65,15 @@ wss.on('connection', (ws: WebSocket) => {
 
 
   setInterval(() => {
-       availableValidators.forEach((validator) => {
+    
+       availableValidators.forEach(async(validator) => {
         console.log("validator",validator.validatorID);
-        console.log(validator.socket);
-        validator.socket.send(JSON.stringify({ type: 'ping', cost:Math.floor(Math.random()*100 )}));
+     //  console.log(validator.socket);
+       const websites=await Website.find({});
+        // console.log("websites",websites);
+        
+        validator.socket.send(JSON.stringify({ type: 'ping',websites}));
         
 
        })
-  }, 2 *1000);
+  }, 10 *1000);

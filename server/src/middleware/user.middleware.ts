@@ -7,13 +7,20 @@ export interface UserRequest extends Request {
 
 export const userMiddleware = async (req: UserRequest, res: Response, next: NextFunction) => {
   try {
-    console.log("Cookies in request:", req.cookies); // Log the cookies to see if they are being sent correctly
-    const token = req.cookies?.token; // Make sure cookie-parser middleware is applied before this
-    console.log("Token from cookies:", token);
+    let token = req.cookies?.token;
+    
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      }
+    }
+    
+    console.log("Token received:", token ? "Yes" : "No");
 
     if (!token) {
-      res.status(401).json({ message: 'Authentication token is missing from cookies' });
-      return;
+       res.status(401).json({ message: 'Authentication token is missing' });
+       return;
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id?: string };

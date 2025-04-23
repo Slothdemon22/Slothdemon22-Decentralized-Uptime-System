@@ -14,8 +14,15 @@
   "dependencies": {
     "@types/express": "^5.0.1",
     "@types/mongoose": "^5.11.96",
+    "bcrypt": "^5.1.1",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "jose": "^6.0.10",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.2"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9"
   }
 }

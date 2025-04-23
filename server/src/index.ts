@@ -1,12 +1,13 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import {connectDB} from './utils/connectDB';
 import User from './models/User';
 import Website from './models/Website';
-import { userMiddleware } from './middleware/user.middleware';
+import { userMiddleware, UserRequest } from './middleware/user.middleware';
 import Validator from './models/Validator';
+import bcrypt from 'bcrypt';
 import WebsiteTick from './models/WebsiteTicks';
+import jwt from 'jsonwebtoken';
 
-// Connect to MongoDB
 
 
 const app = express();
@@ -17,15 +18,55 @@ connectDB()
 // Add User Endpoint
 app.post('/api/addUser', async (req, res) => {
     try {
-        const { name, email } = req.body;
-        const user = new User({ name, email });
+        const { name, email,password } = req.body;
+        const user = new User({ name, email,password:bcrypt.hashSync(password, 10) });
         await user.save();
         res.status(201).json({ message: 'User added successfully', user });
     } catch (error) {
         res.status(500).json({ message: 'Error adding user', error });
     }
 });
+app.post('/api/login', async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
 
+    if (!email || !password) {
+      res.status(400).json({ message: 'Email and password are required' });
+      return;
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      res.status(401).json({ message: 'Invalid credentials' });
+      return;
+    }
+
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '2h' }
+    );
+
+    // Set the cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'strict',
+      maxAge: 2 * 60 * 60 * 1000 // 2 hours
+    });
+
+    res.status(200).json({ message: 'Login successful' });
+  } catch (error: any) {
+    console.error('Login error:', error.message);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 // Add Website Endpoint
 app.post('/api/addWebsite',userMiddleware, async (req, res) => {
     try {
@@ -40,9 +81,9 @@ app.post('/api/addWebsite',userMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Error adding website', error });
     }
 });
-app.post('/api/getWebsites', userMiddleware, async (req, res) => {
+app.post('/api/getWebsites', userMiddleware, async (req:UserRequest, res) => {
     try {
-        const { userID } = req.body;
+        const userID = req.userID ;
         console.log("userid",userID);
         const websites = await Website.find
             ({ userID });

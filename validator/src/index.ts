@@ -1,21 +1,51 @@
+import { Keypair } from '@solana/web3.js';
 import { WebSocket } from 'ws';
+import "dotenv/config";
+import nacl from 'tweetnacl';
 
-const validatorID = "68068e2f016d8c83c687baeb"
+let validatorID: string |null=null
 
 function main() {
   const socket = new WebSocket('ws://localhost:5050');
 
   socket.onopen = () => {
-    console.log(' Connected to server');
-    socket.send(JSON.stringify({ type: 'register', validatorID }));
+    console.log('🔌 Connected to server');
+  
+   
+  
+    
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.PRIVATE_KEY!)));
+    console.log('🔑 Public Key:', keypair.publicKey.toString());
+  
+   
+    const message = `register:${validatorID}:${Date.now()}`;
+    const messageBytes = new TextEncoder().encode(message);
+    const signature = nacl.sign.detached(messageBytes, keypair.secretKey);
+  
+   
+    socket.send(JSON.stringify({
+      type: 'register',
+      validatorID,
+      location:"Lahore",
+      ip:"127.0.0.1",
+      message,
+      signature: JSON.stringify(Array.from(signature)),
+      publicKey: keypair.publicKey.toString()
+    }));
   };
 
   socket.onmessage = async (event) => {
     try {
       const data = JSON.parse(event.data.toString());
+      if(data.type === 'registered'){
+        console.log("Validator registered",data.validatorID)
+        validatorID = data.validatorID
 
+      }
+      
       if (data.type === 'ping') {
         console.log(' Received ping:', data);
+        
 
         data.websites.forEach(async (website: any) => {
           try {

@@ -1,10 +1,13 @@
 import express from 'express';
-import { Server, WebSocketServer, WebSocket } from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
 import mongoose from 'mongoose';
 import { connectDB } from './utils/connectDB';
 import Website from './models/Website';
 import WebsiteTick from './models/WebisteTicks';
 import { randomUUID } from 'crypto';
+import nacl from 'tweetnacl';
+import { PublicKey } from '@solana/web3.js';
+import Validator from './models/Validator';
 
 const app = express();
 const PORT = 5050;
@@ -15,28 +18,44 @@ const CALLBACKS: { [key: string]: (data: any) => void } = {};
 app.use(express.json());
 
 const expressServer = app.listen(PORT, () => {
-  console.log(` Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
 
 const wss = new WebSocketServer({ server: expressServer });
 connectDB();
 
 wss.on('connection', (ws: WebSocket) => {
-  console.log(' New WebSocket connection');
+  console.log('🔌 New WebSocket connection');
 
   ws.on('message', async (message: Buffer) => {
     try {
       const parsedMessage = JSON.parse(message.toString());
 
+    
       if (parsedMessage.type === 'register') {
-        const { validatorID } = parsedMessage;
+        const { message: signedMessage, signature, publicKey,ip,location } = parsedMessage;
+        const validatorID = publicKey; 
+
+        const isValid = await verifyMessage(signedMessage, signature, publicKey);
+        if (!isValid) {
+          console.error('❌ Invalid message signature');
+          return;
+        }
+
+        let validatorDoc = await Validator.findOne({ publicKey:validatorID });
+        if (!validatorDoc) {
+          validatorDoc = new Validator({ publicKey, ip, location });
+          await validatorDoc.save();
+          console.log('🆕 New validator saved to DB:', validatorID);
+        }
 
         if (!availableValidators.some((v) => v.validatorID === validatorID)) {
           availableValidators.push({ validatorID, socket: ws });
-          console.log('Validator registered:', validatorID);
-          ws.send(JSON.stringify({ type: 'registered', validatorID }));
+          console.log('✅ Validator registered:', validatorID);
+          ws.send(JSON.stringify({ type: 'registered',validatorID: validatorDoc._id }));
         }
       }
+
 
       if (parsedMessage.type === 'validate') {
         const { ID } = parsedMessage;
@@ -46,7 +65,7 @@ wss.on('connection', (ws: WebSocket) => {
         }
       }
     } catch (err) {
-      console.error(' Error handling WebSocket message:', err);
+      console.error('❗ Error handling WebSocket message:', err);
     }
   });
 
@@ -57,9 +76,10 @@ wss.on('connection', (ws: WebSocket) => {
   });
 
   ws.on('error', (error: Error) => {
-    console.error(' WebSocket error:', error);
+    console.error('💥 WebSocket error:', error);
   });
 });
+
 
 setInterval(async () => {
   try {
@@ -82,7 +102,7 @@ setInterval(async () => {
             try {
               const { statusCode, latency, status, validatorID } = data;
 
-              console.log(`✅ Validator ${validatorID} responded:`, statusCode, latency, status);
+              console.log(`🔁 Validator ${validatorID} responded:`, statusCode, latency, status);
 
               const newTick = new WebsiteTick({
                 validatorID,
@@ -92,29 +112,49 @@ setInterval(async () => {
               });
 
               await newTick.save();
-              console.log(' Tick saved:', newTick._id);
+              console.log('✅ Tick saved:', newTick._id);
 
               const websiteToUpdate = await Website.findById(website._id);
               if (websiteToUpdate) {
                 websiteToUpdate.Ticks.push(newTick._id as mongoose.Types.ObjectId);
                 await websiteToUpdate.save();
-                console.log(' Website updated:', website.url);
+                console.log('🌐 Website updated:', website.url);
               } else {
-                console.error(' Website not found:', website._id);
+                console.error('❌ Website not found:', website._id);
               }
             } catch (err) {
-              console.error(' Error saving tick or updating website:', err);
+              console.error('❗ Error saving tick or updating website:', err);
             }
           };
 
-          // Clean up the callback if no response
-          setTimeout(() => delete CALLBACKS[callbackID], 30000);
+          // Optional: Clean up stale callbacks after timeout
+          // setTimeout(() => delete CALLBACKS[callbackID], 30000);
         } catch (err) {
-          console.error(' Failed to send ping:', err);
+          console.error('❗ Failed to send ping:', err);
         }
       });
     }
   } catch (err) {
-    console.error(' Error in monitoring interval:', err);
+    console.error('❗ Error in monitoring interval:', err);
   }
-}, 10 * 1000);
+}, 2*30 * 1000);
+
+// Message verification
+async function verifyMessage(
+  message: string,
+  signature: string,
+  publicKey: string
+): Promise<boolean> {
+  try {
+    const messageBytes = new TextEncoder().encode(message);
+    const signatureBytes = Uint8Array.from(JSON.parse(signature));
+    const publicKeyBytes = new PublicKey(publicKey).toBytes();
+
+    const isValid = nacl.sign.detached.verify(messageBytes, signatureBytes, publicKeyBytes);
+    console.log('🔐 Signature verification result:', isValid);
+    return isValid;
+  } catch (err) {
+    console.error('❗ Error verifying message:', err);
+    return false;
+  }
+}

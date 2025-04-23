@@ -7,10 +7,15 @@ import Validator from "./models/Validator";
 import bcrypt from "bcrypt";
 import WebsiteTick from "./models/WebsiteTicks";
 import jwt from "jsonwebtoken";
-
+import cors from "cors";
+import mongoose from "mongoose";
 const app = express();
 app.use(express.json());
 connectDB();
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true,
+}))
 // Define Mongoose Schemas and Models
 
 // Add User Endpoint
@@ -37,6 +42,7 @@ app.post("/api/addUser", async (req, res) => {
 app.post("/api/login", async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
+   
 
     if (!email || !password) {
       res.status(400).json({ message: "Email and password are required" });
@@ -44,12 +50,15 @@ app.post("/api/login", async (req: Request, res: Response) => {
     }
 
     const user = await User.findOne({ email });
+ 
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
+    console.log("req.body", req.body);
 
     const isMatch = await bcrypt.compare(password, user.password);
+    
     if (!isMatch) {
       res.status(401).json({ message: "Invalid credentials" });
       return;
@@ -67,6 +76,7 @@ app.post("/api/login", async (req: Request, res: Response) => {
       maxAge: 2 * 60 * 60 * 1000, // 2 hours
     });
 
+    console.log("Token generated:", token);
     res.status(200).json({ message: "Login successful", token: token });
   } catch (error: any) {
     console.error("Login error:", error.message);
@@ -74,14 +84,23 @@ app.post("/api/login", async (req: Request, res: Response) => {
   }
 });
 // Add Website Endpoint
-app.post("/api/addWebsite", userMiddleware, async (req, res) => {
+app.post("/api/addWebsite", userMiddleware, async (req:UserRequest, res) => {
   try {
     console.log("req.body", req.body);
-    const { url, userID } = req.body;
+    const { url} = req.body;
+    const userID=req.userID;
     console.log("userid", userID);
     const website = new Website({ url, userID });
     await website.save();
+    const user=await User.findById(userID)
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return 
+    }
+    user.Websites.push(website._id as mongoose.Types.ObjectId);
+    await user.save();
     res.status(201).json({ message: "Website added successfully", website });
+
   } catch (error) {
     console.error("error", error);
     res.status(500).json({ message: "Error adding website", error });
@@ -91,7 +110,7 @@ app.post("/api/getWebsites", userMiddleware, async (req: UserRequest, res) => {
   try {
     const userID = req.userID;
     console.log("userid", userID);
-    const websites = await Website.find({ userID });
+    const websites = await Website.find({ userID }).populate("Ticks");
     console.log("websites", websites);
     res
       .status(200)
@@ -101,18 +120,7 @@ app.post("/api/getWebsites", userMiddleware, async (req: UserRequest, res) => {
     res.status(500).json({ message: "Error fetching websites", error });
   }
 });
-app.get("/api/getWebsites", async (req, res) => {
-  try {
-    const websites = await Website.find({});
-    console.log("websites", websites);
-    res
-      .status(200)
-      .json({ message: "Websites fetched successfully", websites });
-  } catch (error: any) {
-    console.error("error", error);
-    res.status(500).json({ message: "Error fetching websites", error });
-  }
-});
+
 app.post("/api/addValidator", async (req, res) => {
   try {
     const { publicKey, location } = req.body;

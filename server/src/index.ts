@@ -9,13 +9,24 @@ import WebsiteTick from "./models/WebsiteTicks";
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import mongoose from "mongoose";
+
 const app = express();
+
+
+
 app.use(express.json());
 connectDB();
 app.use(cors({
   origin: "http://localhost:3000",
   credentials: true,
 }))
+import Stripe from 'stripe';
+
+// Initialize Stripe with your secret key
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-03-31.basil', // Make sure to specify the API version you are using
+});
+
 // Define Mongoose Schemas and Models
 
 // Add User Endpoint
@@ -39,6 +50,89 @@ app.post("/api/addUser", async (req, res) => {
     res.status(500).json({ message: "Error adding user", error });
   }
 });
+app.post('/webhook', express.raw({type: 'application/json'}), (request, response) => {
+  console.log('Received webhook:');
+  // let event = request.body;
+  // // Only verify the event if you have an endpoint secret defined.
+  // // Otherwise use the basic event deserialized with JSON.parse
+  // if (endpointSecret) {
+  //   // Get the signature sent by Stripe
+  //   const signature = request.headers['stripe-signature'];
+  //   try {
+  //     event = stripe.webhooks.constructEvent(
+  //       request.body,
+  //       signature,
+  //       endpointSecret
+  //     );
+  //   } catch (err) {
+  //     console.log(`⚠️  Webhook signature verification failed.`, err.message);
+  //     return response.sendStatus(400);
+  //   }
+  // }
+
+  // // Handle the event
+  // switch (event.type) {
+  //   case 'payment_intent.succeeded':
+  //     const paymentIntent = event.data.object;
+  //     console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
+  //     // Then define and call a method to handle the successful payment intent.
+  //     // handlePaymentIntentSucceeded(paymentIntent);
+  //     break;
+  //   case 'payment_method.attached':
+  //     const paymentMethod = event.data.object;
+  //     // Then define and call a method to handle the successful attachment of a PaymentMethod.
+  //     // handlePaymentMethodAttached(paymentMethod);
+  //     break;
+  //   default:
+  //     // Unexpected event type
+  //     console.log(`Unhandled event type ${event.type}.`);
+  // }
+
+  // // Return a 200 response to acknowledge receipt of the event
+  // response.send();
+});
+app.post('/api/create-checkout-session', async (req, res) => {
+  try {
+    const { amount } = req.body; // Destructure 'amount' from the request body
+
+    if (!amount) {
+     res.status(400).send({ error: 'Amount is required' });
+     return
+    }
+
+    // Create a Checkout Session with line items
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Your Product Name', // Name of your product or service
+            },
+            unit_amount: amount, // Amount in cents
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',  // Mode of payment (single payment)
+      success_url: 'http://localhost:3000/success', // Your success URL
+      cancel_url: 'http://localhost:3000/cancel',   // Your cancel URL
+    });
+
+    // Send the Checkout Session ID to the frontend
+    res.status(200).send({
+      sessionId: session.id,
+    });
+
+  } catch (error:any) {
+    console.error('Error creating checkout session:', error);
+    res.status(500).send({
+      error: error.message,
+    });
+  }
+});
+
 app.post("/api/login", async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -177,7 +271,7 @@ app.post("/api/addTick", async (req: any, res: any) => {
 });
 
 // Start the server
-const PORT = 5000;
+const PORT = 4242;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

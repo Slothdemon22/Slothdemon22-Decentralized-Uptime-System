@@ -20,7 +20,8 @@
     "express": "^5.1.0",
     "jose": "^6.0.10",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.13.2"
+    "mongoose": "^8.13.2",
+    "stripe": "^18.0.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

@@ -5,6 +5,7 @@ import { Check, ChevronDown } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useRouter } from "next/navigation"
 
 interface Tick {
   status: "up" | "down" | "degraded" | "unknown"
@@ -58,7 +59,7 @@ function TickPopup({ tick, serviceName, isOpen, onClose }: TickPopupProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-[#333] text-white max-w-md">
+      <DialogContent className="bg-[#1A1A1A] border-[#333] text-white max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-inter font-semibold flex items-center gap-2">
             <div className={`w-3 h-3 rounded-full ${statusColors[tick.status]}`}></div>
@@ -66,7 +67,7 @@ function TickPopup({ tick, serviceName, isOpen, onClose }: TickPopupProps) {
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
-          <div className="bg-black p-4 rounded-lg">
+          <div className="bg-[#252525] p-4 rounded-lg">
             <div className="flex justify-between items-center mb-2">
               <span className="text-[#888888] font-inter">Service</span>
               <span className="font-medium font-inter">{serviceName}</span>
@@ -126,6 +127,7 @@ export default function StatusPage() {
   const [isTickPopupOpen, setIsTickPopupOpen] = useState(false)
   const [isAddWebsiteOpen, setIsAddWebsiteOpen] = useState(false)
   const [newWebsiteUrl, setNewWebsiteUrl] = useState("")
+  const router = useRouter()
 
   useEffect(() => {
     const token = localStorage.getItem("authToken")
@@ -371,7 +373,12 @@ export default function StatusPage() {
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <span className="w-2 h-2 rounded-full bg-[#2ECC71]"></span>
-                              <span className="font-medium text-white font-inter">{displayName}</span>
+                              <span
+                                className="font-medium text-white font-inter cursor-pointer hover:text-[#2ECC71] transition-colors"
+                                onClick={() => router.push(`/dashboard/${service._id}`)}
+                              >
+                                {displayName}
+                              </span>
                             </div>
                             <span className="text-[#2ECC71] text-sm font-medium font-inter">
                               {uptime.toFixed(3)}% uptime
@@ -432,7 +439,12 @@ export default function StatusPage() {
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-[#2ECC71]"></span>
-                            <span className="font-medium font-inter">{service.name}</span>
+                            <span
+                              className="font-medium font-inter cursor-pointer hover:text-[#2ECC71] transition-colors"
+                              onClick={() => router.push(`/website/${index}`)} // Using index as ID for demo data
+                            >
+                              {service.name}
+                            </span>
                           </div>
                           <span className="text-[#2ECC71] text-sm font-medium font-inter">
                             {service.uptime.toFixed(3)}% uptime

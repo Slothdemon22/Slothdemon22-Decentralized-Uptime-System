@@ -107,6 +107,13 @@ export function HeroSection() {
                 </Link>
                 <ArrowRight className="h-4 w-4" />
               </Button>
+              <Button size="lg" className="gap-2 animated-gradient dark:text-black hover:scale-105 bg-green-400  dark:bg-gradient-to-r dark:from-green-500 dark:via-green-300 to-green-100  transition-transform" >
+                <Link href="/validator">
+                  Become a Validator
+                  
+                </Link>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
               
             </motion.div>
 

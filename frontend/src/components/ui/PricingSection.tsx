@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { SectionHeading } from "@/components/ui//section-heading";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
@@ -105,7 +106,10 @@ export function PricingSection() {
                 
                 <div className="mt-8">
                   <Button variant={plan.buttonVariant} className="w-full">
-                    Get Started
+                  <Link href="/payment">
+                  Pay Now
+                  
+                </Link>
                   </Button>
                 </div>
               </div>

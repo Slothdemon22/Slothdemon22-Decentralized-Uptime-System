@@ -100,8 +100,11 @@ export function HeroSection() {
               transition={{ duration: 0.5, delay: 0.7 }}
               className="mt-8 flex flex-wrap gap-4 justify-center lg:justify-start"
             >
-              <Button size="lg" className="gap-2 animated-gradient text-white hover:scale-105 transition-transform">
-                Get Started 
+              <Button size="lg" className="gap-2 animated-gradient dark:text-black hover:scale-105 transition-transform">
+                <Link href="/dashboard">
+                  Get Started 
+                  
+                </Link>
                 <ArrowRight className="h-4 w-4" />
               </Button>
               

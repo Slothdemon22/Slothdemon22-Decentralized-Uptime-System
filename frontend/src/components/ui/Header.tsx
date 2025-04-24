@@ -73,8 +73,8 @@ export function Header() {
             </nav>
             <div className="flex items-center space-x-4">
               <ThemeToggle />
-              <Button variant="secondary">Log In</Button>
-              <Button>Get Started</Button>
+              <Button variant="secondary"><Link href="/login">Log In</Link></Button>
+              <Button><Link href="/dashboard">Get Started</Link></Button>
             </div>
           </div>
 
@@ -140,8 +140,13 @@ export function Header() {
                 FAQ
               </Link>
               <div className="flex flex-col space-y-2 pt-2">
-                <Button variant="secondary">Log In</Button>
-                <Button className="w-full">Get Started</Button>
+                <Button variant="secondary">
+                <Link href="/dashboard">
+                  Get Started 
+                  
+                </Link>
+                </Button>
+                <Button className="w-full"><Link href="/login">Log In</Link></Button>
               </div>
             </nav>
           </div>

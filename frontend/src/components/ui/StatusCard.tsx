@@ -18,7 +18,7 @@ export function StatusCard({ website }: StatusCardProps) {
   // Sort ticks by date (newest first) and take the most recent 50
   const sortedTicks = [...Ticks]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 50)
+    .slice(0, 90)
   
   const currentStatus = sortedTicks.length > 0 ? sortedTicks[0].status : "Unknown"
   const isOnline = currentStatus === "Good"

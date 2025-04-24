@@ -30,66 +30,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // Define Mongoose Schemas and Models
 
 // Add User Endpoint
-app.post("/api/addUser", async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
 
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      res.status(400).json({ message: "User already exists" });
-      return;
-    }
-    const user = new User({
-      name,
-      email,
-      password: bcrypt.hashSync(password, 10),
-    });
-    await user.save();
-    res.status(201).json({ message: "User added successfully", user });
-  } catch (error) {
-    res.status(500).json({ message: "Error adding user", error });
-  }
-});
 app.post('/webhook', express.raw({type: 'application/json'}), (request, response) => {
   console.log('Received webhook:');
-  // let event = request.body;
-  // // Only verify the event if you have an endpoint secret defined.
-  // // Otherwise use the basic event deserialized with JSON.parse
-  // if (endpointSecret) {
-  //   // Get the signature sent by Stripe
-  //   const signature = request.headers['stripe-signature'];
-  //   try {
-  //     event = stripe.webhooks.constructEvent(
-  //       request.body,
-  //       signature,
-  //       endpointSecret
-  //     );
-  //   } catch (err) {
-  //     console.log(`⚠️  Webhook signature verification failed.`, err.message);
-  //     return response.sendStatus(400);
-  //   }
-  // }
-
-  // // Handle the event
-  // switch (event.type) {
-  //   case 'payment_intent.succeeded':
-  //     const paymentIntent = event.data.object;
-  //     console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
-  //     // Then define and call a method to handle the successful payment intent.
-  //     // handlePaymentIntentSucceeded(paymentIntent);
-  //     break;
-  //   case 'payment_method.attached':
-  //     const paymentMethod = event.data.object;
-  //     // Then define and call a method to handle the successful attachment of a PaymentMethod.
-  //     // handlePaymentMethodAttached(paymentMethod);
-  //     break;
-  //   default:
-  //     // Unexpected event type
-  //     console.log(`Unhandled event type ${event.type}.`);
-  // }
-
-  // // Return a 200 response to acknowledge receipt of the event
-  // response.send();
+ 
 });
 app.post('/api/create-checkout-session', async (req, res) => {
   try {
@@ -132,6 +76,27 @@ app.post('/api/create-checkout-session', async (req, res) => {
     });
   }
 });
+app.post("/api/addUser", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      res.status(400).json({ message: "User already exists" });
+      return;
+    }
+    const user = new User({
+      name,
+      email,
+      password: bcrypt.hashSync(password, 10),
+    });
+    await user.save();
+    res.status(201).json({ message: "User added successfully", user });
+  } catch (error) {
+    res.status(500).json({ message: "Error adding user", error });
+  }
+});
+
 
 app.post("/api/login", async (req: Request, res: Response) => {
   try {
@@ -204,11 +169,24 @@ app.post("/api/getWebsites", userMiddleware, async (req: UserRequest, res) => {
   try {
     const userID = req.userID;
     console.log("userid", userID);
-    const websites = await Website.find({ userID }).populate("Ticks");
+    
+    // Get all websites for the user and populate only the 20 latest ticks
+    const websites = await Website.find({ userID }).populate({
+      path: "Ticks",
+      options: {
+        sort: { createdAt: -1 }, // Sort ticks by createdAt in descending order (newest first)
+        limit: 50 // Limit to 20 ticks per website
+      }
+    });
+    
     console.log("websites", websites);
-    res
-      .status(200)
-      .json({ message: "Websites fetched successfully", websites });
+    res.status(200).json({ 
+      message: "Websites fetched successfully", 
+      websites: websites.map(website => ({
+        ...website.toObject(),
+        Ticks: website.Ticks // Already limited to 20 by the populate options
+      }))
+    });
   } catch (error) {
     console.error("error", error);
     res.status(500).json({ message: "Error fetching websites", error });

@@ -57,13 +57,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-200 text-white flex flex-col">
+    <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
       <header className="w-full border-b border-white/10 bg-black">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <Network className="h-6 w-6 text-white" />
-            <span className="text-xl font-bold">DecentralMonitor</span>
+            <span className="text-xl font-bold cursor-pointer"><Link href="/">Decentral Watch</Link></span>
           </div>
           <Link href="/signup" className="text-sm text-white hover:text-white/90 transition-colors">
             Don't have an account?
@@ -101,7 +101,7 @@ export default function LoginPage() {
                   <Label htmlFor="password" className="text-white">
                     Password
                   </Label>
-                  <Link href="/forgot-password" className="text-xs text-white/80 hover:text-white">
+                  <Link href="#" className="text-xs text-white/80 hover:text-white">
                     Forgot password?
                   </Link>
                 </div>

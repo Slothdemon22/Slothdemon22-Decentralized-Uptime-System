@@ -70,7 +70,7 @@ export default function SignUpPage() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <Network className="h-6 w-6 text-white" />
-            <span className="text-xl font-bold">DecentralMonitor</span>
+            <span className="text-xl font-bold cursor-pointer"><Link href="/">Decentral Watch</Link></span>
           </div>
           <Link href="/login" className="text-sm text-white hover:text-white/90 transition-colors">
             Already have an account?

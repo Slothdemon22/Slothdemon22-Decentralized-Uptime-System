@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, ChevronDown } from 'lucide-react'
+import { Check, ChevronDown } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -32,14 +32,14 @@ function TickPopup({ tick, serviceName, isOpen, onClose }: TickPopupProps) {
     up: "bg-[#2ECC71]",
     down: "bg-[#E74C3C]",
     degraded: "bg-[#F39C12]",
-    unknown: "bg-[#555555]"
+    unknown: "bg-[#555555]",
   }
 
   const statusText = {
     up: "Operational",
     down: "Outage",
     degraded: "Degraded Performance",
-    unknown: "No Data"
+    unknown: "No Data",
   }
 
   const formatDateTime = (dateString: string | null) => {
@@ -58,7 +58,7 @@ function TickPopup({ tick, serviceName, isOpen, onClose }: TickPopupProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#1A1A1A] border-[#333] text-white max-w-md">
+      <DialogContent className="bg-black border-[#333] text-white max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-inter font-semibold flex items-center gap-2">
             <div className={`w-3 h-3 rounded-full ${statusColors[tick.status]}`}></div>
@@ -66,7 +66,7 @@ function TickPopup({ tick, serviceName, isOpen, onClose }: TickPopupProps) {
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
-          <div className="bg-[#252525] p-4 rounded-lg">
+          <div className="bg-black p-4 rounded-lg">
             <div className="flex justify-between items-center mb-2">
               <span className="text-[#888888] font-inter">Service</span>
               <span className="font-medium font-inter">{serviceName}</span>
@@ -89,7 +89,9 @@ function TickPopup({ tick, serviceName, isOpen, onClose }: TickPopupProps) {
             </div>
             <div className="flex justify-between items-center mb-2">
               <span className="text-[#888888] font-inter">Response Time</span>
-              <span className="font-medium font-inter">{tick.responseTime !== null ? `${tick.responseTime}ms` : "N/A"}</span>
+              <span className="font-medium font-inter">
+                {tick.responseTime !== null ? `${tick.responseTime}ms` : "N/A"}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-[#888888] font-inter">Timestamp</span>
@@ -122,6 +124,8 @@ export default function StatusPage() {
   const [selectedTick, setSelectedTick] = useState<Tick | null>(null)
   const [selectedServiceName, setSelectedServiceName] = useState<string>("")
   const [isTickPopupOpen, setIsTickPopupOpen] = useState(false)
+  const [isAddWebsiteOpen, setIsAddWebsiteOpen] = useState(false)
+  const [newWebsiteUrl, setNewWebsiteUrl] = useState("")
 
   useEffect(() => {
     const token = localStorage.getItem("authToken")
@@ -177,6 +181,34 @@ export default function StatusPage() {
       console.error("Error fetching services:", error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleAddWebsite = async () => {
+    try {
+      if (!newWebsiteUrl.trim()) return
+
+      const response = await fetch("http://localhost:4242/api/addWebsite", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url: newWebsiteUrl }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to add website")
+      }
+
+      // Refresh the services list
+      await fetchServices(authToken!)
+
+      // Reset and close dialog
+      setNewWebsiteUrl("")
+      setIsAddWebsiteOpen(false)
+    } catch (error) {
+      console.error("Error adding website:", error)
     }
   }
 
@@ -238,6 +270,55 @@ export default function StatusPage() {
           </h1>
           <p className="text-[#CCCCCC] text-sm font-inter">Last updated on {formatDate(lastUpdated)}</p>
         </div>
+
+        {/* Add Website Button */}
+        <div className="w-full flex justify-end mb-4">
+          <button
+            onClick={() => setIsAddWebsiteOpen(true)}
+            className="bg-[#2ECC71] hover:bg-[#27AE60] text-black font-medium py-2 px-4 rounded-md transition-colors"
+          >
+            Add Website
+          </button>
+        </div>
+
+        {/* Add Website Dialog */}
+        <Dialog open={isAddWebsiteOpen} onOpenChange={setIsAddWebsiteOpen}>
+          <DialogContent className="bg-[#1A1A1A] border-[#333] text-white max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-inter font-semibold">Add Website to Monitor</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-2">
+              <div className="space-y-2">
+                <label htmlFor="website-url" className="text-sm text-[#CCCCCC] font-inter">
+                  Website URL
+                </label>
+                <input
+                  id="website-url"
+                  type="text"
+                  value={newWebsiteUrl}
+                  onChange={(e) => setNewWebsiteUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  className="w-full p-2 rounded-md bg-[#252525] border border-[#333] text-white font-inter"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => setIsAddWebsiteOpen(false)}
+                  className="px-4 py-2 rounded-md bg-[#333] text-white hover:bg-[#444] transition-colors font-inter"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddWebsite}
+                  disabled={!newWebsiteUrl.trim()}
+                  className="px-4 py-2 rounded-md bg-[#2ECC71] text-black font-medium hover:bg-[#27AE60] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-inter"
+                >
+                  Add Website
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Status Card */}
         <Card className="w-full bg-zinc-900 border-0 shadow-xl rounded-xl overflow-hidden">
@@ -301,18 +382,18 @@ export default function StatusPage() {
                             {/* Generate status bars */}
                             {Array.from({ length: totalTicks }).map((_, i) => {
                               // If we have ticks, use them, otherwise show as unknown
-                              let tick: Tick;
-                              
+                              let tick: Tick
+
                               if (service.Ticks && i < service.Ticks.length) {
                                 // We have data for this tick
-                                tick = service.Ticks[service.Ticks.length - 1 - i];
+                                tick = service.Ticks[service.Ticks.length - 1 - i]
                               } else {
                                 // No data for this tick, mark as unknown
-                                tick = { 
-                                  status: "unknown", 
-                                  responseTime: null, 
-                                  createdAt: null 
-                                };
+                                tick = {
+                                  status: "unknown",
+                                  responseTime: null,
+                                  createdAt: null,
+                                }
                               }
 
                               return (
@@ -361,22 +442,23 @@ export default function StatusPage() {
                         <div className="flex gap-[2px]">
                           {Array.from({ length: 50 }).map((_, i) => {
                             // For demo data, show some ticks as unknown
-                            let tick: Tick;
-                            
-                            if (i < 30) { // Only show 30 days of data for demo
-                              const isDown = service.name === "Matching engine" && (i === 15 || i === 22);
+                            let tick: Tick
+
+                            if (i < 30) {
+                              // Only show 30 days of data for demo
+                              const isDown = service.name === "Matching engine" && (i === 15 || i === 22)
                               tick = {
                                 status: isDown ? "down" : "up",
                                 responseTime: isDown ? 500 : 100,
                                 createdAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
-                              };
+                              }
                             } else {
                               // No data for older dates
                               tick = {
                                 status: "unknown",
                                 responseTime: null,
                                 createdAt: null,
-                              };
+                              }
                             }
 
                             return (

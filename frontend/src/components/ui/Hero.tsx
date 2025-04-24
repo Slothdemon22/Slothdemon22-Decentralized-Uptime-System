@@ -73,14 +73,14 @@ export function HeroSection() {
             
             <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight">
               <AnimatedText text="Decentralized Uptime" className="block" />
-              <AnimatedText text="Monitoring for the" className="block" />
+              <AnimatedText text="Monitoring for your sites" className="block" />
               <motion.span 
                 className="bg-clip-text text-transparent bg-gradient-to-r from-chart-1 via-chart-2 to-chart-5"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 0.5 }}
               >
-                <AnimatedText text="Modern Web" className="block" />
+                
               </motion.span>
             </h1>
             
@@ -104,13 +104,7 @@ export function HeroSection() {
                 Get Started 
                 <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="backdrop-blur-sm hover:bg-primary/10 transition-colors"
-              >
-                View Demo
-              </Button>
+              
             </motion.div>
 
             <motion.div

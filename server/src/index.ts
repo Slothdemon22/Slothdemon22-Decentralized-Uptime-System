@@ -21,6 +21,7 @@ app.use(cors({
   credentials: true,
 }))
 import Stripe from 'stripe';
+import resend from "./utils/resend";
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -126,6 +127,14 @@ app.post("/api/login", async (req: Request, res: Response) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, {
       expiresIn: "2h",
     });
+    console.log("Request reached here");
+    const responded=await resend.emails.send({
+      from: 'Decentralized Uptime Guardian <onboarding@tradenexusonline.com>',
+      to: user.email,
+      subject: 'hello world',
+      html: '<p>it works!</p>',
+    });
+    console.log("Resend response",responded);
 
     // Set the cookie
     res.cookie("token", token, {

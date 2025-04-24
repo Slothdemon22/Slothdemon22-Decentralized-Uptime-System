@@ -175,7 +175,7 @@ app.post("/api/getWebsites", userMiddleware, async (req: UserRequest, res) => {
       path: "Ticks",
       options: {
         sort: { createdAt: -1 }, // Sort ticks by createdAt in descending order (newest first)
-        limit: 100 // Limit to 20 ticks per website
+        limit: 50 // Limit to 20 ticks per website
       }
     });
     

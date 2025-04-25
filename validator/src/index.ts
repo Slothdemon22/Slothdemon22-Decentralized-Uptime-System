@@ -75,8 +75,8 @@ function main() {
                 type: 'validate',
                 validatorID,
                 ID: data.callbackID,
-                statusCode: 0,
-                latency: 0,
+                statusCode: 503,
+                latency: 2000,
                 status: 'Bad',
               })
             );
@@ -94,6 +94,7 @@ function main() {
 
   socket.onclose = () => {
     console.log('🔌 Connection closed');
+    process.exit(0);
   };
 }
 

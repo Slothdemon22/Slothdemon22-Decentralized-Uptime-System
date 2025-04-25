@@ -271,7 +271,7 @@ export default function WebsiteDetailPage() {
 
           <Card className="bg-[#252525] border-[#333333] text-white">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-normal text-[#888888]">Uptime</CardTitle>
+              <CardTitle className="text-sm font-normal text-[#888888]">Uptime   </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">

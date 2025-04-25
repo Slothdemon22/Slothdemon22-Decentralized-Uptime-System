@@ -137,7 +137,7 @@ setInterval(async () => {
   } catch (err) {
     console.error('❗ Error in monitoring interval:', err);
   }
-}, 2*4 * 1000);
+}, 5 *60 * 1000);
 
 // Message verification
 async function verifyMessage(

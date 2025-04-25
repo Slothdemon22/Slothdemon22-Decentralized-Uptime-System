@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, ChevronDown, ArrowLeft } from "lucide-react";
+import { Check, ChevronDown, ArrowLeft,Activity,Menu, X } from "lucide-react";
+import Link from "next/link";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -150,6 +152,8 @@ export default function StatusPage() {
   const [isTickPopupOpen, setIsTickPopupOpen] = useState(false);
   const [isAddWebsiteOpen, setIsAddWebsiteOpen] = useState(false);
   const [newWebsiteUrl, setNewWebsiteUrl] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false)
+
   const router = useRouter();
 
   useEffect(() => {
@@ -290,12 +294,60 @@ export default function StatusPage() {
 
   return (
     <div className="min-h-screen bg-black p-10" >
-      <button
-        onClick={() => router.push("/")}
-        className="flex items-center gap-2 text-[#CCCCCC] hover:text-white mb-4 transition-colors cursor-pointer"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back 
-      </button>
+      <header className="sticky top-0 z-50 w-full h-16 backdrop-blur border-b border-border/50 bg-background/80">
+      <div className="container mx-auto h-full px-4 flex items-center justify-between">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2">
+          <Activity className="h-6 w-6 text-primary" />
+          <span className="font-bold text-xl bg-clip-text  text-white">
+            DecentralWatch
+          </span>
+        </Link>
+
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-6 text-muted-foreground text-sm">
+          <Link href="/" className="hover:text-white transition-colors">Home</Link>
+          <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
+          <Link href="/validator" className="hover:text-white transition-colors">Validators</Link>
+        </nav>
+
+        {/* Mobile menu toggle */}
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="md:hidden text-muted-foreground hover:text-white transition-colors"
+        >
+          {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Mobile nav */}
+      {menuOpen && (
+        <div className="md:hidden bg-background border-t border-border/50 px-4 py-4 space-y-3">
+          <Link
+            href="/"
+            className="block text-muted-foreground hover:text-white transition-colors"
+            onClick={() => setMenuOpen(false)}
+          >
+            Home
+          </Link>
+          <Link
+            href="/dashboard"
+            className="block text-muted-foreground hover:text-white transition-colors"
+            onClick={() => setMenuOpen(false)}
+          >
+            Dashboard
+          </Link>
+          <Link
+            href="/validator"
+            className="block text-muted-foreground hover:text-white transition-colors"
+            onClick={() => setMenuOpen(false)}
+          >
+            Validators
+          </Link>
+        </div>
+      )}
+    </header>
+      
     <div className="min-h-screen bg-black text-white flex flex-col items-center py-16 px-4 font-inter">
       
       <div className="w-full max-w-3xl flex flex-col items-center">
